@@ -19,6 +19,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -37,9 +39,13 @@ public class SubscriptionService {
         }
 
         try {
-            userRestClient.get().uri("/api/users/{id}", subscriptionDto.userId()).retrieve().body(UserResponseDto.class);
+            userRestClient.get().uri("/api/users/{id}", subscriptionDto.userId());
         } catch (RestClientResponseException exception) {
             throw new ResourceNotFoundException("user", subscriptionDto.userId());
+        }
+
+        if (repository.existsByUserIdAndPlanAndStatusIsIn(subscriptionDto.userId(), plan, List.of(SubscriptionStatus.PENDING, SubscriptionStatus.ACTIVE))) {
+            throw new InvalidOperationException("user already has equivalent active or pending plan subscription");
         }
 
         Subscription subscription = new Subscription();

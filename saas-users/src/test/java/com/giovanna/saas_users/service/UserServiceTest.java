@@ -37,7 +37,7 @@ class UserServiceTest {
 
     @Test
     void save_Success() {
-        when(repository.findByEmail(userDto.email())).thenReturn(Optional.empty());
+        when(repository.existsByEmail(userDto.email())).thenReturn(false);
         when(repository.save(any(User.class))).thenReturn(user);
 
         User result = service.save(userDto);
@@ -47,18 +47,18 @@ class UserServiceTest {
         assertEquals(userDto.name(), result.getName());
         assertEquals(userDto.email(), result.getEmail());
 
-        verify(repository, times(1)).findByEmail(userDto.email());
+        verify(repository, times(1)).existsByEmail(userDto.email());
         verify(repository, times(1)).save(any(User.class));
     }
 
     @Test
     void save_EmailAlreadyInUse() {
-        when(repository.findByEmail(userDto.email())).thenReturn(Optional.of(user));
+        when(repository.existsByEmail(userDto.email())).thenReturn(true);
 
         InvalidOperationException exception = assertThrows(InvalidOperationException.class, () -> service.save(userDto));
         assertEquals("provided email address is already in use", exception.getMessage());
 
-        verify(repository, times(1)).findByEmail(userDto.email());
+        verify(repository, times(1)).existsByEmail(userDto.email());
         verify(repository, never()).save(any(User.class));
     }
 

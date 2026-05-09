@@ -17,7 +17,7 @@ public class UserService {
 
     @Transactional
     public User save(UserDto userDto) {
-        if (repository.findByEmail(userDto.email()).isPresent()) {
+        if (repository.existsByEmail(userDto.email())) {
             throw new InvalidOperationException("provided email address is already in use");
         }
 
