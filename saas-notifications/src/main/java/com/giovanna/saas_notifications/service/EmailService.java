@@ -24,7 +24,6 @@ public class EmailService {
             
             return true;
         } catch (MailException exception) {
-            System.out.println(exception.getMessage());
             return false;
         }
     }

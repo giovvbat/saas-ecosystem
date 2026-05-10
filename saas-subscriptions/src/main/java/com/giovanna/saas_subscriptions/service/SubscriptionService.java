@@ -67,7 +67,7 @@ public class SubscriptionService {
         Subscription subscription = retrieve(id);
 
         if (subscription.getStatus() == SubscriptionStatus.CANCELED) {
-            throw new InvalidOperationException("subscription is already cancelled");
+            throw new InvalidOperationException("subscription is already canceled");
         }
 
         subscription.setStatus(SubscriptionStatus.CANCELED);

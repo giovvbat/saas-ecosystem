@@ -38,7 +38,7 @@ public class NotificationService {
             MessageContentDto messageContentDto = MessageContentFactory.generate(userResponseDto.name(), SubscriptionStatus.valueOf(subscriptionEventDto.status()), subscriptionEventDto.paymentRequests(), subscriptionEventDto.timestamp());
             NotificationStatus status = emailService.send(userResponseDto.email(), messageContentDto.subject(), messageContentDto.body()) ? NotificationStatus.SENT : NotificationStatus.FAILED;
 
-            save(new NotificationDto(subscriptionEventDto.subscriptionId(), messageContentDto.type(), messageContentDto.subject(), messageContentDto.body(), userResponseDto.email(), status));
+            save(new NotificationDto(subscriptionEventDto.subscriptionId(), userResponseDto.id(), messageContentDto.type(), messageContentDto.subject(), messageContentDto.body(), userResponseDto.email(), status));
         } catch (RestClientResponseException exception) {
             throw new ResourceNotFoundException("user", subscriptionEventDto.userId());
         }

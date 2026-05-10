@@ -25,6 +25,7 @@ public class Notification implements Serializable {
     private String body;
 
     private String subscriptionId;
+    private String userId;
     private String destination;
     private String subject;
 }

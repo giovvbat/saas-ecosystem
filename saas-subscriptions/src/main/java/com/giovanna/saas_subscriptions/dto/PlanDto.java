@@ -5,5 +5,5 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-public record PlanDto(@NotNull PlanType type, @Positive Double price, @NotBlank String name, @NotNull boolean active) {
+public record PlanDto(@NotNull PlanType type, @NotNull @Positive Double price, @NotBlank String name, @NotNull boolean active) {
 }
