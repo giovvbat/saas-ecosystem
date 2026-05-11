@@ -1,10 +1,10 @@
-package com.giovanna.saas_gateway;
+package com.giovanna.saas_billings;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class SaasGatewayApplicationTests {
+class SaasBillingsApplicationTests {
 	@Test
 	void contextLoads() {
 	}

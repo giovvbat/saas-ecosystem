@@ -1,15 +1,12 @@
 package com.giovanna.saas_subscriptions.service;
 
-import com.giovanna.saas_subscriptions.dto.PayRequestDto;
-import com.giovanna.saas_subscriptions.dto.SubscriptionDto;
-import com.giovanna.saas_subscriptions.dto.SubscriptionEventDto;
-import com.giovanna.saas_subscriptions.dto.UserResponseDto;
+import com.giovanna.saas_subscriptions.dto.*;
 import com.giovanna.saas_subscriptions.enums.SubscriptionStatus;
 import com.giovanna.saas_subscriptions.exception.InvalidOperationException;
 import com.giovanna.saas_subscriptions.exception.ResourceNotFoundException;
 import com.giovanna.saas_subscriptions.model.Plan;
 import com.giovanna.saas_subscriptions.model.Subscription;
-import com.giovanna.saas_subscriptions.publisher.SubscriptionEventPublisher;
+import com.giovanna.saas_subscriptions.publisher.BillingEventPublisher;
 import com.giovanna.saas_subscriptions.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -18,9 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +23,7 @@ public class SubscriptionService {
     private final SubscriptionRepository repository;
     private final PlanService planService;
     private final RestClient userRestClient;
-    private final SubscriptionEventPublisher subscriptionEventPublisher;
+    private final BillingEventPublisher billingEventPublisher;
 
     @Transactional
     public Subscription save(SubscriptionDto subscriptionDto) {
@@ -39,9 +34,9 @@ public class SubscriptionService {
         }
 
         try {
-            userRestClient.get().uri("/api/users/{id}", subscriptionDto.userId());
+            userRestClient.get().uri("/api/users/{id}", subscriptionDto.userId()).retrieve().toBodilessEntity();
         } catch (RestClientResponseException exception) {
-            throw new ResourceNotFoundException("user", subscriptionDto.userId());
+            throw new ResourceNotFoundException("unable to make sure user with id " + subscriptionDto.userId() + " exists");
         }
 
         if (repository.existsByUserIdAndPlanAndStatusIsIn(subscriptionDto.userId(), plan, List.of(SubscriptionStatus.PENDING, SubscriptionStatus.ACTIVE))) {
@@ -53,9 +48,12 @@ public class SubscriptionService {
 
         subscription.setStatus(SubscriptionStatus.PENDING);
         subscription.setPlan(plan);
-        subscription.setPaymentRequests(0);
 
-        return repository.save(subscription);
+        subscription = repository.save(subscription);
+
+        billingEventPublisher.publish(new BillingEventDto(subscription.getId(), plan.getPrice()));
+
+        return subscription;
     }
 
     public Subscription retrieve(String id) {
@@ -66,36 +64,20 @@ public class SubscriptionService {
     public Subscription cancel(String id) {
         Subscription subscription = retrieve(id);
 
-        if (subscription.getStatus() == SubscriptionStatus.CANCELED) {
-            throw new InvalidOperationException("subscription is already canceled");
+        if (subscription.getStatus() == SubscriptionStatus.CANCELED || subscription.getStatus() == SubscriptionStatus.FAILED) {
+            throw new InvalidOperationException("subscription is already canceled or failed");
         }
 
         subscription.setStatus(SubscriptionStatus.CANCELED);
-        subscriptionEventPublisher.publish(new SubscriptionEventDto(subscription.getUserId(), subscription.getId(), subscription.getStatus().name(), subscription.getPaymentRequests(), LocalDateTime.now().toString()));
 
         return repository.save(subscription);
     }
 
     @Transactional
-    public Subscription pay(String id, PayRequestDto payRequestDto) {
+    public void update(String id, SubscriptionStatus status) {
         Subscription subscription = retrieve(id);
+        subscription.setStatus(status);
 
-        if (subscription.getStatus() != SubscriptionStatus.PENDING) {
-            throw new InvalidOperationException("subscriptions must be pending in order to be paid for");
-        }
-
-        subscription.setPaymentRequests(subscription.getPaymentRequests() + 1);
-
-        if (payRequestDto.success()) {
-            subscription.setStatus(SubscriptionStatus.ACTIVE);
-        } else {
-            if (subscription.getPaymentRequests() >= 3) {
-                subscription.setStatus(SubscriptionStatus.FAILED);
-            }
-        }
-
-        subscriptionEventPublisher.publish(new SubscriptionEventDto(subscription.getUserId(), subscription.getId(), subscription.getStatus().name(), subscription.getPaymentRequests(), LocalDateTime.now().toString()));
-
-        return repository.save(subscription);
+        repository.save(subscription);
     }
 }

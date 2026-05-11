@@ -1,4 +1,4 @@
-package com.giovanna.saas_subscriptions.dto;
+package com.giovanna.saas_billings.dto;
 
 public record SubscriptionEventDto(String id, String status) {
 }

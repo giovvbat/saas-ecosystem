@@ -21,5 +21,4 @@ public class Subscription implements Serializable {
     private SubscriptionStatus status;
 
     private String userId;
-    private int paymentRequests;
 }

@@ -1,10 +1,6 @@
-package com.giovanna.saas_subscriptions.exception;
+package com.giovanna.saas_billings.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String message) {
-        super(message);
-    }
-
     public ResourceNotFoundException(String resource, String id) {
         super(resource + " with id " + id + " not found");
     }
