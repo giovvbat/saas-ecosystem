@@ -17,6 +17,10 @@ public class PlanService {
 
     @Transactional
     public Plan save(PlanDto planDto) {
+        if (repository.existsByName(planDto.name())) {
+            throw new InvalidOperationException("plan with name " + planDto.name() + " already exists");
+        }
+
         Plan plan = new Plan();
         BeanUtils.copyProperties(planDto, plan);
 
