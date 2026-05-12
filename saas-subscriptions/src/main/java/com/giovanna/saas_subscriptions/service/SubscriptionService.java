@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -48,6 +49,8 @@ public class SubscriptionService {
 
         subscription.setStatus(SubscriptionStatus.PENDING);
         subscription.setPlan(plan);
+        subscription.setRegistration(LocalDateTime.now());
+        subscription.setExpiration(generateExpiration(subscription));
 
         subscription = repository.save(subscription);
 
@@ -64,8 +67,8 @@ public class SubscriptionService {
     public Subscription cancel(String id) {
         Subscription subscription = retrieve(id);
 
-        if (subscription.getStatus() == SubscriptionStatus.CANCELED || subscription.getStatus() == SubscriptionStatus.FAILED) {
-            throw new InvalidOperationException("subscription is already canceled or failed");
+        if (!(subscription.getStatus() == SubscriptionStatus.PENDING) && !(subscription.getStatus() == SubscriptionStatus.ACTIVE)) {
+            throw new InvalidOperationException("subscription must be pending or active in order to be canceled");
         }
 
         subscription.setStatus(SubscriptionStatus.CANCELED);
@@ -79,5 +82,18 @@ public class SubscriptionService {
         subscription.setStatus(status);
 
         repository.save(subscription);
+    }
+
+    @Transactional
+    public void finish() {
+        repository.finish();
+    }
+
+    private LocalDateTime generateExpiration(Subscription subscription) {
+        return switch (subscription.getPlan().getType()) {
+            case MONTHLY -> subscription.getRegistration().plusMonths(1);
+            case SEMI_ANNUAL -> subscription.getRegistration().plusMonths(6);
+            case ANNUAL -> subscription.getRegistration().plusMonths(12);
+        };
     }
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tb_billings")
@@ -20,4 +21,6 @@ public class Billing implements Serializable {
     private String subscriptionId;
     private double amount;
     private int paymentRequests;
+    private LocalDateTime registration;
+    private LocalDateTime expiration;
 }

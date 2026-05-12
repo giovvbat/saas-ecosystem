@@ -3,5 +3,6 @@ package com.giovanna.saas_billings.enums;
 public enum BillingStatus {
     PENDING,
     PAID,
-    FAILED;
+    EXPIRED,
+    FAILED,;
 }

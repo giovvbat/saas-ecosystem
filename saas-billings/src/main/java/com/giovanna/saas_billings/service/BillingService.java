@@ -14,14 +14,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class BillingService {
     private final BillingRepository repository;
-    private final RestClient subscriptionRestClient;
     private final SubscriptionEventPublisher subscriptionEventPublisher;
 
     @Transactional
@@ -31,6 +31,8 @@ public class BillingService {
 
         billing.setPaymentRequests(0);
         billing.setStatus(BillingStatus.PENDING);
+        billing.setRegistration(LocalDateTime.now());
+        billing.setExpiration(billing.getRegistration().plusDays(7));
 
         repository.save(billing);
     }
@@ -59,5 +61,15 @@ public class BillingService {
         }
 
         return repository.save(billing);
+    }
+
+    @Transactional
+    public void expire() {
+        List<String> expired = repository.retrieveExpiringSubscriptionIds();
+
+        if (!expired.isEmpty()) {
+            repository.expire();
+            expired.forEach(id -> subscriptionEventPublisher.publish(new SubscriptionEventDto(id, SubscriptionStatus.EXPIRED.name())));
+        }
     }
 }

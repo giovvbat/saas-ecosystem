@@ -32,8 +32,8 @@ class PlanServiceTest {
 
     @BeforeEach
     void setUp() {
-        planDto = new PlanDto(PlanType.SEMESTER, 99.90, "Premium", false);
-        plan = new Plan("123", PlanType.SEMESTER, 99.90, "Premium", false);
+        planDto = new PlanDto(PlanType.SEMI_ANNUAL, 99.90, "Premium", false);
+        plan = new Plan("123", PlanType.SEMI_ANNUAL, 99.90, "Premium", false);
     }
 
     @Test
